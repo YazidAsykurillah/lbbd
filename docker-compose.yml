@@ -1,0 +1,78 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: laravel_backend_boilerplate_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    user: "1000:1000"
+    environment:
+      TZ: Asia/Jakarta
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: laravel_backend_boilerplate_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - backend
+
+  mysql:
+    image: mysql:8
+    container_name: laravel_backend_boilerplate_mysql
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Jakarta
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel_backend_boilerplate
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
+    ports:
+      - "3306:3306"
+    volumes:
+      - laravel_backend_boilerplate_mysql_data:/var/lib/mysql
+    networks:
+      - backend
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: laravel_backend_boilerplate_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - backend
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: laravel_backend_boilerplate_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - backend
+
+volumes:
+  laravel_backend_boilerplate_mysql_data:
+
+networks:
+  backend:
+    driver: bridge
